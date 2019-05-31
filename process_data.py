@@ -1,20 +1,12 @@
-import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import seaborn as sns
-import math
-from sklearn.model_selection import train_test_split
 
 
 class ZivsProcessor:
     fill = {"median": lambda data: data.median(),
             "mode": lambda data: data.mode()[0]}
 
-    def __init__(self):
-        pass
-
-    def categorize_features_by_values_amount(self, data, threshold=2):
+    @staticmethod
+    def categorize_features_by_values_amount(data, threshold=2):
         '''
         Can be used to convert a/b values to 0/1 values using threshold=2
         :param data: the data
@@ -26,7 +18,8 @@ class ZivsProcessor:
         return pd.get_dummies(data, columns=categorized_features, drop_first=True,
                               prefix_sep='$')
 
-    def print_and_return_cols_with_null(self, data):
+    @staticmethod
+    def print_and_return_cols_with_null(data):
         '''
         Prints the columns that has null values in them (with the amount of values), and return the
         column names
@@ -36,17 +29,19 @@ class ZivsProcessor:
         print('Data columns with null values:\n', null_data)
         return null_data[null_data != 0].index.tolist()
 
-    def complete_missing_data(self, data, feature, filling="median"):
+    @staticmethod
+    def complete_missing_data(data, feature, filling="median"):
         '''
         Complete the missing values in the data by a certain method (median, mode, etc.)
         :param data: data
         :param feature: feature to be completed
-        :param filling: way of completing -- possible options are listed in self.fill dictionary
+        :param filling: way of completing -- possible options are listed in class fill dictionary
         :return: None, data is changed globally
         '''
-        data[feature].fillna(self.fill[filling](data[feature]), inplace=True)
+        data[feature].fillna(ZivsProcessor.fill[filling](data[feature]), inplace=True)
 
-    def convert_rare_values(self, data, feature, threshold=10, new_value='Misc',
+    @staticmethod
+    def convert_rare_values(data, feature, threshold=10, new_value='Misc',
                             print_result=False):
         '''
         Convert the rare values of the feature to a new_value, by a given threshold
@@ -65,7 +60,8 @@ class ZivsProcessor:
             print("-" * 10)
         return data
 
-    def convert_features_with_label_encoder(self, data, features):
+    @staticmethod
+    def convert_features_with_label_encoder(data, features):
         '''
         Adds the converted feature as a new col with 'feature_Code'
         :param data: the data
