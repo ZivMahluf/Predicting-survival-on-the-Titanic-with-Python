@@ -10,30 +10,41 @@ from process_data import ZivsProcessor
 
 class ZivsVisualizer:
 
-    def __init__(self, data, labels):
-        self.data = data
-        self.labels = labels
+    @staticmethod
+    def save_heatmap(data, labels):
+        corr = data.assign(labels=labels).corr()
 
-    def save_heatmap(self):
-        # check for any correlations between variables
-        corr = self.data.assign(labels=self.labels).corr()
-        plt.figure(figsize=(5, 5))  # increase pic size
-        sns.heatmap(corr, annot=True, annot_kws={"size": 7})
+        _, ax = plt.subplots(figsize=(14, 12))
+        colormap = sns.diverging_palette(220, 10, as_cmap=True)
+
+        _ = sns.heatmap(
+            corr,
+            cmap=colormap,
+            square=True,
+            cbar_kws={'shrink': .9},
+            ax=ax,
+            annot=True,
+            linewidths=0.1, vmax=1.0, linecolor='white',
+            annot_kws={'fontsize': 12}
+        )
+
+        plt.title('Pearson Correlation of Features', y=1.05, size=15)
         plt.savefig("images/heatmap.png", type='png')
 
-    def save_classification_graphs(self):
+    @staticmethod
+    def save_classification_graphs(data, labels):
         '''
         Save scatter graphs for all features, where each point in the graph is marked by the label
         of the feature.
         :return: None
         '''
         fig, ax = plt.subplots(1, 1)
-        pos = np.where(self.labels == 1)
-        neg = np.where(self.labels == 0)
+        pos = np.where(labels == 1)
+        neg = np.where(labels == 0)
         cdict = {0: 'red', 1: 'green'}
-        for feature in self.data.columns:
-            ax.scatter(self.data[feature].iloc[neg], neg, c=cdict[0], s=20, label='dead')
-            ax.scatter(self.data[feature].iloc[pos], pos, c=cdict[1], s=20, label='alive')
+        for feature in data.columns:
+            ax.scatter(data[feature].iloc[neg], neg, c=cdict[0], s=20, label='dead')
+            ax.scatter(data[feature].iloc[pos], pos, c=cdict[1], s=20, label='alive')
             ax.set_ylabel('labels')
             ax.set_xlabel(feature)
             ax.set_title(feature + ' by label')
@@ -41,7 +52,8 @@ class ZivsVisualizer:
             plt.savefig('images/' + feature + '.png', format='png')
             plt.cla()
 
-    def percentage_of_ones_for_features(self, threshold=2):
+    @staticmethod
+    def percentage_of_ones_for_features(data, labels, threshold=2):
         '''
         Save a bar graph, where the x_axis is the feature name, and the y graph is the percentage
         of y=1 for the value of the feature
@@ -72,12 +84,12 @@ class ZivsVisualizer:
 
         plt.rcParams.update({'font.size': 8})
         fig, ax = plt.subplots(figsize=(20, 6))
-        for feature in self.data.columns:
-            diff_values = self.data[feature].value_counts()
+        for feature in data.columns:
+            diff_values = data[feature].value_counts()
             if len(diff_values) <= threshold:
                 for value in diff_values.index:
                     # will contain 1 when data is 'value' AND label is 1
-                    condition_met = np.where(self.data[feature] == value, self.labels, 0)
+                    condition_met = np.where(data[feature] == value, labels, 0)
                     # plot the percentage of feature=value and label=1
                     rects = ax.bar(feature + '=' + str(value),
                                    round(condition_met.sum() / len(condition_met), 2),
@@ -93,5 +105,28 @@ class ZivsVisualizer:
         plt.savefig('images/percentage_of_features.png', format='png')
         plt.cla()
 
+    @staticmethod
+    def print_label_percentage(data, label_feature_name, labels, percentage=True):
+        '''
+        One of the most important functions in here.
+        For every feature in the data, it prints the percentage of each value for both
+        Target/Label=1 and 0. Will show you clearly which feature VALUES are related to the target.
 
-
+        Note: makes local copy of data. if data is too big you can change this function to use it
+        w/o a copy by sending the data with target features as part of it.
+        :param data: the data
+        :param label_feature_name: the name of the target feature/column
+        :param labels: the labels
+        :param percentage: (default:True) print percentage, if you want AMOUNT, use false.
+        :return: None
+        '''
+        loc_data = data.copy(deep=True)
+        loc_data[label_feature_name] = labels
+        for col in loc_data.columns:
+            if loc_data[col].dtype != 'float64' and col != label_feature_name:
+                print('Correlation between ' + label_feature_name + ' and ' + col)
+                if percentage:
+                    print(loc_data[[col, label_feature_name]].groupby(col, as_index=False).mean())
+                else:
+                    print(pd.crosstab(loc_data[col], loc_data[label_feature_name]))
+                print('-' * 10, '\n')

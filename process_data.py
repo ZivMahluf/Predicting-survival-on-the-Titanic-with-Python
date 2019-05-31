@@ -26,7 +26,7 @@ class ZivsProcessor:
         return pd.get_dummies(data, columns=categorized_features, drop_first=True,
                               prefix_sep='$')
 
-    def print_and_return_data_to_be_completed(self, data):
+    def print_and_return_cols_with_null(self, data):
         '''
         Prints the columns that has null values in them (with the amount of values), and return the
         column names

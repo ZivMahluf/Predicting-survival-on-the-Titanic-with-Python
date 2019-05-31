@@ -174,24 +174,21 @@ def q10(ada, X, y, X_test, y_test, T):
 
 if __name__ == '__main__':
     data = pd.read_csv('data/train.csv')
-    data = data.drop(columns=['Survived'])
-
     test_data = pd.read_csv('data/test.csv')
+
     processor = ZivsProcessor()
+    visualizer = ZivsVisualizer()
 
     # check which columns are null
     for dataset in [data, test_data]:
-        null_cols = processor.print_and_return_data_to_be_completed(dataset)
-
         # complete data
         processor.complete_missing_data(dataset, "Age", "median")
         processor.complete_missing_data(dataset, "Embarked", "mode")
         processor.complete_missing_data(dataset, "Fare", "median")
-        # # remove redundant features
-        dataset = dataset.drop(columns=['PassengerId', 'Ticket', 'Cabin'])
 
-        # validate that there's no null columns
-        null_cols = processor.print_and_return_data_to_be_completed(dataset)
+    # remove redundant features
+    data = data.drop(columns=['PassengerId', 'Ticket', 'Cabin'])
+    test_data = test_data.drop(columns=['PassengerId', 'Ticket', 'Cabin'])
 
     # create features
     for dataset in [data, test_data]:
@@ -216,12 +213,14 @@ if __name__ == '__main__':
         processor.convert_features_with_label_encoder(dataset, features)
 
     labels = data['Survived']
+    data = data.drop(columns=['Survived'])
 
     # convert to dummy variables
     dummy_features = ['Sex', 'Pclass', 'Embarked', 'Title', 'SibSp', 'Parch', 'Age',
                       'Fare', 'FamilySize', 'IsAlone']
     data = pd.get_dummies(data[dummy_features])
 
+    visualizer.print_label_percentage(data, 'Survived', labels)
 
     # # categorize
     # data = processor.categorize_features_by_values_amount(data, 5)
